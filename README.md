@@ -15,6 +15,8 @@
 
 Reference-based CVSS v3.1 scoring app built with FastAPI and a lightweight browser UI. It fetches a CVE record, pulls the referenced advisories, runs the bundled re-score engine in both normal and strict modes, and presents the result in an analyst-friendly view with optional raw JSON.
 
+The app accepts standard CVE IDs in the form `CVE-YYYY-NNNN` and longer, including both older 4-digit sequences and newer 5+ digit sequences.
+
 ## What It Does
 
 - Re-scores a CVE from references instead of trusting the published vector blindly
@@ -99,6 +101,11 @@ python -m uvicorn app:app --reload
 ```
 
 Open `http://127.0.0.1:8000`.
+
+Examples:
+
+- `CVE-2026-4366`
+- `CVE-2026-32746`
 
 ## Example API Call
 

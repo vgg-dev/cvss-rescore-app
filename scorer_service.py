@@ -16,19 +16,19 @@ RAW_CVE_BASE = "https://raw.githubusercontent.com/CVEProject/cvelistV5/main/cves
 
 
 class AnalyzeRequest(BaseModel):
-    cve_id: str = Field(..., description="CVE identifier, for example CVE-2026-32746")
+    cve_id: str = Field(..., description="CVE identifier in the form CVE-YYYY-NNNN or CVE-YYYY-NNNNN+")
 
 
 def _cve_url(cve_id: str) -> str:
     try:
         _, year, number = cve_id.split("-")
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid CVE ID format") from exc
+        raise HTTPException(status_code=400, detail="Invalid CVE ID format. Expected CVE-YYYY-NNNN or longer.") from exc
 
-    if len(number) < 5 or not year.isdigit() or not number.isdigit():
-        raise HTTPException(status_code=400, detail="Invalid CVE ID format")
+    if len(number) < 4 or not year.isdigit() or not number.isdigit():
+        raise HTTPException(status_code=400, detail="Invalid CVE ID format. Expected CVE-YYYY-NNNN or longer.")
 
-    prefix = number[:2] + "xxx"
+    prefix = number[:-3] + "xxx"
     return f"{RAW_CVE_BASE}/{year}/{prefix}/{cve_id}.json"
 
 
