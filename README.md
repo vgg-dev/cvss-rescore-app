@@ -18,14 +18,6 @@ Reference-based CVSS v3.1 scoring app built with FastAPI and a lightweight brows
 
 The app accepts standard CVE IDs in the form `CVE-YYYY-NNNN` and longer, including both older 4-digit sequences and newer 5+ digit sequences.
 
-## UI Preview
-
-![Desktop UI preview](docs/images/ui-preview.svg)
-
-<p align="center">
-  <img src="docs/images/mobile-preview.svg" alt="Mobile UI preview" width="320">
-</p>
-
 ## What It Does
 
 - Re-scores a CVE from references instead of trusting the published vector blindly
@@ -94,8 +86,6 @@ cvss-scorer-app/
 |- tests/
 |  |- test_app.py
 |  `- test_scorer_service.py
-|- docs/
-|  `- images/
 |- requirements.txt
 |- render.yaml
 |- static/
