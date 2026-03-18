@@ -238,6 +238,10 @@ Suggested topics:
 - `vulnerability-management`
 - `render`
 
+GitHub social preview asset:
+
+- Upload [docs/social-preview.png](docs/social-preview.png) in `Settings -> General -> Social preview`.
+
 ## Key Files
 
 - App entry: [app.py](app.py)
