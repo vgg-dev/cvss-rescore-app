@@ -15,16 +15,22 @@
   <code>Render Ready</code>
 </p>
 
-Reference-based CVSS v3.1 scoring app built with FastAPI and a lightweight browser UI. It fetches a CVE record, pulls the referenced advisories, runs the bundled re-score engine in both normal and strict modes, and presents the result in an analyst-friendly view with optional raw JSON.
+CVSS Re-score Workbench is a FastAPI app for reference-based CVSS v3.1 analysis. It fetches CVE records, re-evaluates supporting references, and returns both an independent score and a strict no-fallback result through a lightweight browser UI and API.
 
 The app accepts standard CVE IDs in the form `CVE-YYYY-NNNN` and longer, including both older 4-digit sequences and newer 5+ digit sequences.
 
 Live deployment:
 
-- App: `https://cvss-rescore-app.onrender.com`
-- Swagger UI: `https://cvss-rescore-app.onrender.com/docs`
-- ReDoc: `https://cvss-rescore-app.onrender.com/redoc`
-- OpenAPI JSON: `https://cvss-rescore-app.onrender.com/openapi.json`
+- [App](https://cvss-rescore-app.onrender.com)
+- [Swagger UI](https://cvss-rescore-app.onrender.com/docs)
+- [ReDoc](https://cvss-rescore-app.onrender.com/redoc)
+- [OpenAPI JSON](https://cvss-rescore-app.onrender.com/openapi.json)
+
+## Quick Start
+
+1. Open the [live app](https://cvss-rescore-app.onrender.com).
+2. Try a CVE such as `CVE-2026-4366` or `CVE-2026-32746`.
+3. Inspect the generated API docs at [Swagger UI](https://cvss-rescore-app.onrender.com/docs).
 
 ## What It Does
 
@@ -66,23 +72,6 @@ flowchart LR
     D --> H[Strict result]
     G --> A
     H --> A
-```
-
-## Interface Highlights
-
-```text
-+---------------------------+
-| Header + CVE input        |
-+---------------------------+
-| At a glance               |
-| published | rescored      |
-| delta     | confidence    |
-+---------------------------+
-| Summary cards             |
-| Details                   |
-| Evidence                  |
-| Raw JSON (optional)       |
-+---------------------------+
 ```
 
 ## Project Layout
@@ -136,6 +125,8 @@ Invoke-RestMethod `
   -Body '{"cve_id":"CVE-2026-32746"}'
 ```
 
+Typical responses include published vs. rescored values, strict-mode output, confidence, and evidence-quality fields.
+
 The generated API docs include:
 
 - typed request and response schemas
@@ -145,10 +136,9 @@ The generated API docs include:
 
 ## Run Tests
 
+Install dependencies first if you have not already run the local setup steps.
+
 ```powershell
-git clone https://github.com/vgg-dev/cvss-rescore-app.git
-Set-Location .\cvss-rescore-app
-python -m pip install -r requirements.txt
 python -m pytest
 ```
 
@@ -193,6 +183,12 @@ Current regression coverage focuses on:
 |---|---|---|
 | Independent | Uses reference evidence and falls back when support is missing | Fast comparison and practical triage |
 | Strict | Leaves unsupported metrics undetermined | Conservative review and analyst validation |
+
+## Limitations
+
+- Reference text can be incomplete, noisy, or inconsistent across advisories.
+- Fallback-heavy independent results should be reviewed by an analyst.
+- Strict mode may intentionally return no final score when the references do not support enough metrics.
 
 ## Security Notes
 
