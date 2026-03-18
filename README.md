@@ -190,13 +190,6 @@ Current regression coverage focuses on:
 - Fallback-heavy independent results should be reviewed by an analyst.
 - Strict mode may intentionally return no final score when the references do not support enough metrics.
 
-## Security Notes
-
-- Temporary CVE download artifacts are request-scoped and cleaned up automatically
-- The API does not return internal filesystem paths
-- Raw JSON is optional in the UI and intended for analyst review
-- The test suite includes regressions for temp cleanup and CVE ID parsing
-
 See also:
 
 - [Contributing Guide](CONTRIBUTING.md)
