@@ -18,6 +18,14 @@ Reference-based CVSS v3.1 scoring app built with FastAPI and a lightweight brows
 
 The app accepts standard CVE IDs in the form `CVE-YYYY-NNNN` and longer, including both older 4-digit sequences and newer 5+ digit sequences.
 
+## UI Preview
+
+![Desktop UI preview](docs/images/ui-preview.svg)
+
+<p align="center">
+  <img src="docs/images/mobile-preview.svg" alt="Mobile UI preview" width="320">
+</p>
+
 ## What It Does
 
 - Re-scores a CVE from references instead of trusting the published vector blindly
@@ -83,6 +91,11 @@ flowchart LR
 cvss-scorer-app/
 |- app.py
 |- scorer_service.py
+|- tests/
+|  |- test_app.py
+|  `- test_scorer_service.py
+|- docs/
+|  `- images/
 |- requirements.txt
 |- render.yaml
 |- static/
@@ -118,6 +131,21 @@ Invoke-RestMethod `
   -Body '{"cve_id":"CVE-2026-32746"}'
 ```
 
+## Run Tests
+
+```powershell
+Set-Location C:\Users\vgera\cvss-scorer-app
+python -m pip install -r requirements.txt
+python -m pytest
+```
+
+Current regression coverage focuses on:
+
+- CVE ID parsing for both 4-digit and 5+ digit sequences
+- HTTP responses for `/` and `/api/analyze`
+- request-scoped temporary directory cleanup
+- service output passthrough at the API layer
+
 ## Response Shape
 
 ```json
@@ -137,6 +165,15 @@ Invoke-RestMethod `
 }
 ```
 
+## Common API Errors
+
+| Status | When it happens | Example |
+|---|---|---|
+| `400` | The CVE ID format is invalid | `NOT-A-CVE` |
+| `404` | The CVE JSON does not exist upstream | Reserved or mistyped CVE |
+| `502` | The app cannot fetch the upstream CVE JSON | Network or upstream availability issue |
+| `500` | The bundled scorer failed or returned invalid JSON | Local execution/scoring failure |
+
 ## Scoring Modes
 
 | Mode | Behavior | Use case |
@@ -149,15 +186,16 @@ Invoke-RestMethod `
 - Temporary CVE download artifacts are request-scoped and cleaned up automatically
 - The API does not return internal filesystem paths
 - Raw JSON is optional in the UI and intended for analyst review
+- The test suite includes regressions for temp cleanup and CVE ID parsing
 
 See also:
 
-- [Contributing Guide](/Users/vgera/cvss-scorer-app/CONTRIBUTING.md)
-- [Security Policy](/Users/vgera/cvss-scorer-app/SECURITY.md)
+- [Contributing Guide](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
 
 ## Deploy To Render
 
-This repo already includes [render.yaml](/Users/vgera/cvss-scorer-app/render.yaml).
+This repo already includes [render.yaml](render.yaml).
 
 Render uses:
 
@@ -189,9 +227,10 @@ Suggested topics:
 
 ## Key Files
 
-- App entry: [app.py](/Users/vgera/cvss-scorer-app/app.py)
-- Backend wrapper: [scorer_service.py](/Users/vgera/cvss-scorer-app/scorer_service.py)
-- Bundled scorer: [infer_cvss31_from_references.py](/Users/vgera/cvss-scorer-app/vendor/infer_cvss31_from_references.py)
-- Frontend: [index.html](/Users/vgera/cvss-scorer-app/static/index.html)
-- Styles: [app.css](/Users/vgera/cvss-scorer-app/static/app.css)
-- Client logic: [app.js](/Users/vgera/cvss-scorer-app/static/app.js)
+- App entry: [app.py](app.py)
+- Backend wrapper: [scorer_service.py](scorer_service.py)
+- Bundled scorer: [infer_cvss31_from_references.py](vendor/infer_cvss31_from_references.py)
+- Frontend: [index.html](static/index.html)
+- Styles: [app.css](static/app.css)
+- Client logic: [app.js](static/app.js)
+- Tests: [tests/test_scorer_service.py](tests/test_scorer_service.py), [tests/test_app.py](tests/test_app.py)

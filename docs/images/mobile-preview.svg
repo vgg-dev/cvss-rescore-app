@@ -1,0 +1,31 @@
+<svg width="540" height="900" viewBox="0 0 540 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="540" height="900" rx="36" fill="#F6EFE6"/>
+  <rect x="92" y="32" width="356" height="836" rx="42" fill="#1F1B18"/>
+  <rect x="110" y="62" width="320" height="776" rx="32" fill="#FFFDF9"/>
+  <rect x="224" y="42" width="92" height="12" rx="6" fill="#3D342E"/>
+  <text x="136" y="116" fill="#B0552B" font-family="Georgia, serif" font-size="14" letter-spacing="2">REFERENCE-BASED CVSS V3.1</text>
+  <text x="136" y="164" fill="#201B18" font-family="Georgia, serif" font-size="44" font-weight="700">CVSS</text>
+  <text x="136" y="212" fill="#201B18" font-family="Georgia, serif" font-size="42" font-weight="700">Re-score</text>
+  <text x="136" y="260" fill="#62554D" font-family="Georgia, serif" font-size="40">Workbench</text>
+  <text x="136" y="306" fill="#5A4D45" font-family="Arial, sans-serif" font-size="18">Readable CVE analysis from a phone-sized layout.</text>
+
+  <rect x="136" y="338" width="268" height="88" rx="20" fill="#F8F4EE" stroke="#E5D7C7"/>
+  <text x="156" y="370" fill="#201B18" font-family="Arial, sans-serif" font-size="16" font-weight="700">CVE ID</text>
+  <rect x="156" y="384" width="146" height="20" rx="10" fill="#FFFFFF" stroke="#DCCBBA"/>
+  <rect x="314" y="378" width="70" height="30" rx="15" fill="#201B18"/>
+  <text x="332" y="398" fill="#FFFDF9" font-family="Arial, sans-serif" font-size="14" font-weight="700">Go</text>
+
+  <rect x="136" y="452" width="268" height="106" rx="20" fill="#FFFDF9" stroke="#E5D7C7"/>
+  <text x="156" y="484" fill="#7B6E66" font-family="Arial, sans-serif" font-size="15">At a glance</text>
+  <text x="156" y="526" fill="#201B18" font-family="Georgia, serif" font-size="34" font-weight="700">9.4 CRITICAL</text>
+  <rect x="156" y="538" width="116" height="24" rx="12" fill="#F6D8BF"/>
+  <text x="176" y="554" fill="#8F4A2A" font-family="Arial, sans-serif" font-size="13" font-weight="700">Needs review</text>
+
+  <rect x="136" y="580" width="268" height="118" rx="20" fill="#FFFDF9" stroke="#E5D7C7"/>
+  <text x="156" y="612" fill="#201B18" font-family="Georgia, serif" font-size="24" font-weight="700">Summary</text>
+  <text x="156" y="642" fill="#5A4D45" font-family="Arial, sans-serif" font-size="16">Published and re-scored vectors are translated into plain language.</text>
+
+  <rect x="136" y="718" width="268" height="88" rx="20" fill="#FFFDF9" stroke="#E5D7C7"/>
+  <text x="156" y="750" fill="#201B18" font-family="Georgia, serif" font-size="24" font-weight="700">Raw JSON</text>
+  <text x="156" y="780" fill="#5A4D45" font-family="Arial, sans-serif" font-size="16">Still available, but kept behind a toggle.</text>
+</svg>

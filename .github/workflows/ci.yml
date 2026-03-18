@@ -21,3 +21,6 @@ jobs:
 
       - name: Compile Python sources
         run: python -m py_compile app.py scorer_service.py vendor/infer_cvss31_from_references.py
+
+      - name: Run tests
+        run: pytest
