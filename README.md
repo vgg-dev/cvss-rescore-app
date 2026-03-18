@@ -1,8 +1,19 @@
-# CVSS Re-score Workbench
+<p align="center"><strong>REFERENCE-BASED CVSS v3.1</strong></p>
 
-Reference-based CVSS v3.1 scoring app built with FastAPI and a lightweight browser UI.
+<h1 align="center">CVSS Re-score Workbench</h1>
 
-It fetches a CVE record, pulls the referenced advisories, runs the bundled re-score engine in both normal and strict modes, and presents the result in an analyst-friendly view with optional raw JSON.
+<p align="center">
+  Review published scores, inspect evidence-backed metric changes, and keep raw output one click away.
+</p>
+
+<p align="center">
+  <code>FastAPI</code>
+  <code>Strict Mode</code>
+  <code>Evidence View</code>
+  <code>Render Ready</code>
+</p>
+
+Reference-based CVSS v3.1 scoring app built with FastAPI and a lightweight browser UI. It fetches a CVE record, pulls the referenced advisories, runs the bundled re-score engine in both normal and strict modes, and presents the result in an analyst-friendly view with optional raw JSON.
 
 ## What It Does
 
