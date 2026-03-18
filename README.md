@@ -7,6 +7,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/vgg-dev/cvss-rescore-app/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/vgg-dev/cvss-rescore-app/actions/workflows/ci.yml/badge.svg"></a>
   <code>FastAPI</code>
   <code>Strict Mode</code>
   <code>Evidence View</code>
@@ -148,6 +149,11 @@ Invoke-RestMethod `
 - Temporary CVE download artifacts are request-scoped and cleaned up automatically
 - The API does not return internal filesystem paths
 - Raw JSON is optional in the UI and intended for analyst review
+
+See also:
+
+- [Contributing Guide](/Users/vgera/cvss-scorer-app/CONTRIBUTING.md)
+- [Security Policy](/Users/vgera/cvss-scorer-app/SECURITY.md)
 
 ## Deploy To Render
 
