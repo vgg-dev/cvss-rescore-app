@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CVSS Re-score App</title>
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="hero-topline">
+          <span class="eyebrow">Reference-based CVSS v3.1</span>
+          <span class="hero-badge">Analyst-friendly output</span>
+        </div>
+        <h1>
+          <span class="hero-line"><span class="title-soft">CVSS</span> Re-score</span>
+          <span class="hero-line hero-line-soft">Workbench</span>
+        </h1>
+        <p class="lede">Review published scores, inspect evidence-backed metric changes, and keep raw output one click away when you need the underlying JSON.</p>
+      </section>
+
+      <section class="panel">
+        <form id="analyze-form" class="form">
+          <label for="cve_id">CVE ID</label>
+          <div class="row">
+            <input id="cve_id" name="cve_id" type="text" placeholder="CVE-2026-32746" required>
+            <button type="submit">Analyze</button>
+          </div>
+          <div class="mode-picker" role="radiogroup" aria-label="Results mode">
+            <label class="mode-option">
+              <input type="radio" name="view_mode" value="both" checked>
+              <span>Both modes</span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="view_mode" value="normal">
+              <span>Independent only</span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="view_mode" value="strict">
+              <span>Strict only</span>
+            </label>
+          </div>
+        </form>
+        <p id="status" class="status">Enter a CVE ID and run analysis.</p>
+      </section>
+
+      <section id="overview" class="panel hidden">
+        <div class="overview-head">
+          <div>
+            <p class="section-kicker">At a glance</p>
+            <h2 id="overview-title">Analysis summary</h2>
+          </div>
+          <span id="severity-pill" class="pill">n/a</span>
+        </div>
+        <p id="overview-text" class="overview-text"></p>
+        <div class="grid metrics-grid">
+          <article class="stat-card">
+            <p class="stat-label">Published score</p>
+            <p id="original-score-big" class="stat-value"></p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">Re-scored</p>
+            <p id="rescored-score-big" class="stat-value"></p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">Delta</p>
+            <p id="score-delta-big" class="stat-value"></p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">Confidence</p>
+            <p id="confidence-big" class="stat-value"></p>
+            <span id="confidence-badge" class="confidence-badge">n/a</span>
+          </article>
+        </div>
+      </section>
+
+      <section id="summary" class="panel hidden">
+        <h2>Summary</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Published</h3>
+            <div class="summary-item">
+              <strong>CVSS breakdown</strong>
+              <span id="original-vector" class="value-block human-value"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Exact vector</strong>
+              <span id="original-vector-raw" class="value-block vector-value subtle-value"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Score</strong>
+              <span id="original-score" class="value-block"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Source</strong>
+              <span id="original-source" class="value-block"></span>
+            </div>
+          </article>
+          <article class="card">
+            <h3>Independent Re-score</h3>
+            <div class="summary-item">
+              <strong>CVSS breakdown</strong>
+              <span id="rescored-vector" class="value-block human-value"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Exact vector</strong>
+              <span id="rescored-vector-raw" class="value-block vector-value subtle-value"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Score</strong>
+              <span id="rescored-score" class="value-block"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Severity</strong>
+              <span id="rescored-severity" class="value-block"></span>
+            </div>
+          </article>
+          <article class="card">
+            <h3>Confidence</h3>
+            <div class="summary-item">
+              <strong>Assessment</strong>
+              <span id="confidence" class="value-block confidence-text"></span>
+              <span id="confidence-note" class="summary-note"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Fallback metrics</strong>
+              <span id="fallback-count" class="value-block"></span>
+            </div>
+            <div class="summary-item">
+              <strong>Reference errors</strong>
+              <span id="reference-errors" class="value-block"></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="details" class="panel hidden">
+        <h2>Details</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Changed Metrics</h3>
+            <p class="helper">Only metrics that differ from the published vector appear here.</p>
+            <div id="changed-metrics" class="detail-list"></div>
+          </article>
+          <article class="card">
+            <h3>Evidence Quality</h3>
+            <p class="helper">This shows which metrics were evidence-backed, fallback-driven, or undetermined.</p>
+            <div class="detail-group">
+              <strong>Evidence-backed</strong>
+              <div id="evidence-backed" class="chip-row"></div>
+            </div>
+            <div class="detail-group">
+              <strong>Fallback-driven</strong>
+              <div id="fallback-metrics" class="chip-row"></div>
+            </div>
+            <div class="detail-group">
+              <strong>Undetermined in strict mode</strong>
+              <div id="undetermined-metrics" class="chip-row"></div>
+            </div>
+          </article>
+          <article class="card">
+            <h3>Strict Mode</h3>
+            <p class="helper">Strict mode refuses to score unsupported metrics instead of filling them with defaults.</p>
+            <div class="detail-group">
+              <strong>Status</strong>
+              <span id="strict-status" class="value-block"></span>
+            </div>
+            <div class="detail-group">
+              <strong>Strict score</strong>
+              <span id="strict-score" class="value-block"></span>
+            </div>
+            <div class="detail-group">
+              <strong>Strict severity</strong>
+              <span id="strict-severity" class="value-block"></span>
+            </div>
+            <div class="detail-group">
+              <strong>Strict vector</strong>
+              <span id="strict-vector" class="value-block vector-value subtle-value"></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="evidence-panel" class="panel hidden">
+        <h2>Evidence</h2>
+        <p class="helper">These snippets are the strongest reference-backed signals the scorer found for each metric.</p>
+        <div id="evidence-list" class="detail-list"></div>
+      </section>
+
+      <section id="raw" class="panel hidden">
+        <div class="raw-head">
+          <div>
+            <h2>Raw Results</h2>
+            <p class="helper">The structured backend response is available if you want the full JSON.</p>
+          </div>
+          <button id="toggle-raw" type="button" class="secondary-button">Show raw JSON</button>
+        </div>
+        <pre id="raw-json" class="hidden"></pre>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
