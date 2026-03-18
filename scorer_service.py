@@ -5,9 +5,10 @@ import urllib.error
 import urllib.request
 from contextlib import ExitStack
 from pathlib import Path
+from typing import Any
 
 from fastapi import HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -16,7 +17,83 @@ RAW_CVE_BASE = "https://raw.githubusercontent.com/CVEProject/cvelistV5/main/cves
 
 
 class AnalyzeRequest(BaseModel):
-    cve_id: str = Field(..., description="CVE identifier in the form CVE-YYYY-NNNN or CVE-YYYY-NNNNN+")
+    cve_id: str = Field(
+        ...,
+        description="CVE identifier in the form CVE-YYYY-NNNN or longer.",
+        examples=["CVE-2026-4366", "CVE-2026-32746"],
+    )
+
+
+class ErrorResponse(BaseModel):
+    detail: str = Field(..., description="Human-readable error message.")
+
+
+class ComparisonModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    original_vector: str | None = Field(default=None, description="Published or source vector, if available.")
+    original_score: float | None = Field(default=None, description="Published or source numeric CVSS score.")
+    original_source: str | None = Field(default=None, description="Origin of the published score, such as CNA.")
+    rescored_vector: str | None = Field(default=None, description="Re-scored CVSS v3.1 vector.")
+    rescored_score: float | None = Field(default=None, description="Re-scored numeric CVSS value.")
+    rescored_severity: str | None = Field(default=None, description="Severity for the re-scored value.")
+    score_delta: float | None = Field(default=None, description="Difference between re-scored and published values.")
+    changed_metrics: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Metrics that changed between the published and re-scored vectors.",
+    )
+
+
+class EvidenceQualityModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    evidence_backed_metrics: list[str] = Field(
+        default_factory=list,
+        description="Metrics supported directly by advisory or reference evidence.",
+    )
+    fallback_metrics: list[str] = Field(
+        default_factory=list,
+        description="Metrics filled using fallback defaults in independent mode.",
+    )
+    undetermined_metrics: list[str] = Field(
+        default_factory=list,
+        description="Metrics left unresolved in strict mode.",
+    )
+
+
+class AnalysisModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    vector: str | None = Field(default=None, description="Final CVSS v3.1 vector for this analysis mode.")
+    score: float | None = Field(default=None, description="Final numeric CVSS score for this analysis mode.")
+    severity: str | None = Field(default=None, description="Severity associated with the final score.")
+    confidence: str | None = Field(default=None, description="Confidence assessment for the independent analysis.")
+    low_confidence: bool | None = Field(default=None, description="True when the independent result needs review.")
+    comparison: ComparisonModel = Field(
+        default_factory=ComparisonModel,
+        description="Published versus re-scored comparison details.",
+    )
+    evidence_quality: EvidenceQualityModel = Field(
+        default_factory=EvidenceQualityModel,
+        description="Breakdown of evidence-backed, fallback, and undetermined metrics.",
+    )
+    evidence: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Per-metric evidence snippets and inference details from the scorer.",
+    )
+    reference_fetch_errors: list[Any] = Field(
+        default_factory=list,
+        description="Reference retrieval errors encountered while gathering source material.",
+    )
+
+
+class AnalyzeResponse(BaseModel):
+    cve_id: str = Field(..., description="Normalized uppercase CVE identifier.")
+    analysis: AnalysisModel = Field(..., description="Independent analysis result using fallback defaults as needed.")
+    strict_analysis: AnalysisModel = Field(
+        ...,
+        description="Strict analysis result, which refuses to score unsupported metrics.",
+    )
 
 
 def _cve_url(cve_id: str) -> str:

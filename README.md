@@ -107,6 +107,12 @@ python -m uvicorn app:app --reload
 
 Open `http://127.0.0.1:8000`.
 
+API documentation:
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
+- OpenAPI JSON: `http://127.0.0.1:8000/openapi.json`
+
 Examples:
 
 - `CVE-2026-4366`
@@ -121,6 +127,13 @@ Invoke-RestMethod `
   -ContentType "application/json" `
   -Body '{"cve_id":"CVE-2026-32746"}'
 ```
+
+The generated API docs include:
+
+- typed request and response schemas
+- endpoint summaries and descriptions
+- example request values
+- documented error responses for `400`, `404`, `502`, and `500`
 
 ## Run Tests
 

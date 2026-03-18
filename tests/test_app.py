@@ -14,7 +14,7 @@ def test_index_serves_html() -> None:
 
 
 def test_analyze_endpoint_returns_service_output(monkeypatch) -> None:
-    expected = {
+    service_output = {
         "cve_id": "CVE-2026-32746",
         "analysis": {"score": 9.4, "severity": "CRITICAL"},
         "strict_analysis": {"score": None, "severity": None},
@@ -22,7 +22,7 @@ def test_analyze_endpoint_returns_service_output(monkeypatch) -> None:
 
     def fake_analyze(request):
         assert request.cve_id == "CVE-2026-32746"
-        return expected
+        return service_output
 
     monkeypatch.setattr(app_module, "analyze_cve", fake_analyze)
     client = TestClient(app_module.app)
@@ -30,4 +30,11 @@ def test_analyze_endpoint_returns_service_output(monkeypatch) -> None:
     response = client.post("/api/analyze", json={"cve_id": "CVE-2026-32746"})
 
     assert response.status_code == 200
-    assert response.json() == expected
+    body = response.json()
+    assert body["cve_id"] == service_output["cve_id"]
+    assert body["analysis"]["score"] == 9.4
+    assert body["analysis"]["severity"] == "CRITICAL"
+    assert body["strict_analysis"]["score"] is None
+    assert body["strict_analysis"]["severity"] is None
+    assert "comparison" in body["analysis"]
+    assert "evidence_quality" in body["analysis"]
