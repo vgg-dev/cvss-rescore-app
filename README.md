@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/vgg-dev/cvss-rescore-app/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/vgg-dev/cvss-rescore-app/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://cvss-rescore-app.onrender.com"><img alt="Live App" src="https://img.shields.io/badge/live%20app-Render-1f6feb"></a>
   <code>FastAPI</code>
   <code>Strict Mode</code>
   <code>Evidence View</code>
@@ -17,6 +18,13 @@
 Reference-based CVSS v3.1 scoring app built with FastAPI and a lightweight browser UI. It fetches a CVE record, pulls the referenced advisories, runs the bundled re-score engine in both normal and strict modes, and presents the result in an analyst-friendly view with optional raw JSON.
 
 The app accepts standard CVE IDs in the form `CVE-YYYY-NNNN` and longer, including both older 4-digit sequences and newer 5+ digit sequences.
+
+Live deployment:
+
+- App: `https://cvss-rescore-app.onrender.com`
+- Swagger UI: `https://cvss-rescore-app.onrender.com/docs`
+- ReDoc: `https://cvss-rescore-app.onrender.com/redoc`
+- OpenAPI JSON: `https://cvss-rescore-app.onrender.com/openapi.json`
 
 ## What It Does
 
