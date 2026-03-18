@@ -99,7 +99,8 @@ cvss-scorer-app/
 ## Run Locally
 
 ```powershell
-Set-Location C:\Users\vgera\cvss-scorer-app
+git clone https://github.com/vgg-dev/cvss-rescore-app.git
+Set-Location .\cvss-rescore-app
 python -m pip install -r requirements.txt
 python -m uvicorn app:app --reload
 ```
@@ -124,7 +125,8 @@ Invoke-RestMethod `
 ## Run Tests
 
 ```powershell
-Set-Location C:\Users\vgera\cvss-scorer-app
+git clone https://github.com/vgg-dev/cvss-rescore-app.git
+Set-Location .\cvss-rescore-app
 python -m pip install -r requirements.txt
 python -m pytest
 ```
