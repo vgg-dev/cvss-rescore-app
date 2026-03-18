@@ -223,25 +223,6 @@ Typical deploy flow:
 4. Let Render use `render.yaml`.
 5. Deploy and test `POST /api/analyze`.
 
-## Suggested GitHub About
-
-If the repository `About` box is blank on GitHub, this is a good description to use:
-
-> Reference-based CVSS v3.1 re-scoring workbench with independent and strict analysis modes, evidence review, and FastAPI deployment support.
-
-Suggested topics:
-
-- `cvss`
-- `cve`
-- `security`
-- `fastapi`
-- `vulnerability-management`
-- `render`
-
-GitHub social preview asset:
-
-- Upload [docs/social-preview.png](docs/social-preview.png) in `Settings -> General -> Social preview`.
-
 ## Key Files
 
 - App entry: [app.py](app.py)
