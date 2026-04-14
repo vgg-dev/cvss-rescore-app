@@ -1,6 +1,9 @@
 import json
+import os
 import subprocess
+import sys
 import tempfile
+import threading
 import urllib.error
 import urllib.request
 from contextlib import ExitStack
@@ -14,6 +17,10 @@ from pydantic import BaseModel, ConfigDict, Field
 BASE_DIR = Path(__file__).resolve().parent
 SCRIPT_PATH = BASE_DIR / "vendor" / "infer_cvss31_from_references.py"
 RAW_CVE_BASE = "https://raw.githubusercontent.com/CVEProject/cvelistV5/main/cves"
+SCORER_TIMEOUT_SECONDS = int(os.getenv("SCORER_TIMEOUT_SECONDS", "60"))
+SCORER_QUEUE_TIMEOUT_SECONDS = int(os.getenv("SCORER_QUEUE_TIMEOUT_SECONDS", "5"))
+SCORER_MAX_CONCURRENT = int(os.getenv("SCORER_MAX_CONCURRENT", "2"))
+SCORER_SEMAPHORE = threading.BoundedSemaphore(SCORER_MAX_CONCURRENT)
 
 
 class AnalyzeRequest(BaseModel):
@@ -124,30 +131,45 @@ def _fetch_cve_json(cve_id: str, temp_dir: Path) -> Path:
 
 
 def _run_inference(cve_json_path: Path, strict: bool) -> dict:
-    command = ["python", str(SCRIPT_PATH), "--cve-json", str(cve_json_path)]
+    command = [sys.executable, str(SCRIPT_PATH), "--cve-json", str(cve_json_path)]
     if strict:
         command.append("--strict-undetermined")
 
-    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=SCORER_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(status_code=504, detail="Scoring timed out. Please try again later.") from exc
+
     if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip() or "Scoring failed"
-        raise HTTPException(status_code=500, detail=detail)
+        raise HTTPException(status_code=500, detail="Scoring failed. Please try again later.")
 
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError as exc:
-        raise HTTPException(status_code=500, detail="Scorer returned invalid JSON") from exc
+        raise HTTPException(status_code=500, detail="Scoring failed. Please try again later.") from exc
 
 
 def analyze_cve(request: AnalyzeRequest) -> dict:
     cve_id = request.cve_id.strip().upper()
+    if not SCORER_SEMAPHORE.acquire(timeout=SCORER_QUEUE_TIMEOUT_SECONDS):
+        raise HTTPException(status_code=503, detail="Scoring service is busy. Please try again later.")
+
     with ExitStack() as stack:
-        temp_dir = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="cvss-rescore-")))
-        cve_json_path = _fetch_cve_json(cve_id, temp_dir)
-        normal = _run_inference(cve_json_path, strict=False)
-        strict = _run_inference(cve_json_path, strict=True)
-        return {
-            "cve_id": cve_id,
-            "analysis": normal,
-            "strict_analysis": strict,
-        }
+        try:
+            temp_dir = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="cvss-rescore-")))
+            cve_json_path = _fetch_cve_json(cve_id, temp_dir)
+            normal = _run_inference(cve_json_path, strict=False)
+            strict = _run_inference(cve_json_path, strict=True)
+            return {
+                "cve_id": cve_id,
+                "analysis": normal,
+                "strict_analysis": strict,
+            }
+        finally:
+            SCORER_SEMAPHORE.release()

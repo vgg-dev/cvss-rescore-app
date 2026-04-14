@@ -1,13 +1,21 @@
+import os
+import threading
+import time
+from collections import defaultdict, deque
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from scorer_service import AnalyzeRequest, AnalyzeResponse, ErrorResponse, analyze_cve
 
 
 BASE_DIR = Path(__file__).resolve().parent
+RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "12"))
+RATE_LIMIT_BUCKETS: defaultdict[str, deque[float]] = defaultdict(deque)
+RATE_LIMIT_LOCK = threading.Lock()
 
 app = FastAPI(
     title="CVSS Re-score Workbench API",
@@ -20,6 +28,44 @@ app = FastAPI(
     ),
 )
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next) -> Response:
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    if request.url.path not in {"/docs", "/redoc", "/openapi.json"}:
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'self'; frame-ancestors 'none'",
+        )
+    return response
+
+
+@app.middleware("http")
+async def analyze_rate_limit(request: Request, call_next) -> Response:
+    if request.url.path != "/api/analyze":
+        return await call_next(request)
+
+    client = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    with RATE_LIMIT_LOCK:
+        bucket = RATE_LIMIT_BUCKETS[client]
+        while bucket and now - bucket[0] > RATE_LIMIT_WINDOW_SECONDS:
+            bucket.popleft()
+
+        if len(bucket) >= RATE_LIMIT_MAX_REQUESTS:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit exceeded. Please try again later."},
+                headers={"Retry-After": str(RATE_LIMIT_WINDOW_SECONDS)},
+            )
+
+        bucket.append(now)
+    return await call_next(request)
 
 
 @app.get(
@@ -64,6 +110,18 @@ async def index() -> FileResponse:
         500: {
             "model": ErrorResponse,
             "description": "The local scorer failed or returned invalid output.",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "The scorer is busy and the request could not be queued.",
+        },
+        504: {
+            "model": ErrorResponse,
+            "description": "The scorer timed out.",
+        },
+        429: {
+            "model": ErrorResponse,
+            "description": "Too many analyze requests from the same client.",
         },
     },
 )

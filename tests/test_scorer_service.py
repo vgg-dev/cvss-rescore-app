@@ -1,11 +1,12 @@
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
 
 import scorer_service
-from scorer_service import AnalyzeRequest, _cve_url, analyze_cve
+from scorer_service import AnalyzeRequest, _cve_url, _run_inference, analyze_cve
 
 
 def test_cve_url_supports_four_digit_sequence() -> None:
@@ -84,3 +85,27 @@ def test_analyze_cve_cleans_up_temporary_directory(monkeypatch: pytest.MonkeyPat
     assert result["cve_id"] == "CVE-2026-4366"
     assert seen["temp_dir"].name.startswith("cvss-rescore-")
     assert not seen["temp_dir"].exists()
+
+
+def test_run_inference_returns_generic_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=kwargs.get("args", "scorer"), timeout=1)
+
+    monkeypatch.setattr(scorer_service.subprocess, "run", fake_run)
+
+    with pytest.raises(HTTPException) as exc_info:
+        _run_inference(Path("CVE-2026-4366.json"), strict=False)
+
+    assert exc_info.value.status_code == 504
+    assert exc_info.value.detail == "Scoring timed out. Please try again later."
+
+
+def test_run_inference_returns_generic_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    result = subprocess.CompletedProcess(args=["scorer"], returncode=1, stdout="secret path", stderr="traceback")
+    monkeypatch.setattr(scorer_service.subprocess, "run", lambda *args, **kwargs: result)
+
+    with pytest.raises(HTTPException) as exc_info:
+        _run_inference(Path("CVE-2026-4366.json"), strict=False)
+
+    assert exc_info.value.status_code == 500
+    assert exc_info.value.detail == "Scoring failed. Please try again later."

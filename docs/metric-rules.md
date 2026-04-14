@@ -561,6 +561,19 @@ Ignored patterns include:
 
 This helps avoid treating advisory UI boilerplate as evidence.
 
+## Reference Fetch Guardrails
+
+Reference fetching is intentionally bounded because CVE records can point to arbitrary external URLs.
+
+Current guardrails:
+
+- only `https` reference URLs are fetched
+- hosts resolving to private, loopback, link-local, multicast, reserved, or unspecified addresses are blocked
+- reference responses are capped at `1,000,000` bytes
+- reference fetch failures are recorded in `reference_fetch_errors`
+
+These controls reduce SSRF and resource-exhaustion risk, but they also mean some references may be skipped if they use `http`, redirect to blocked hosts, or return very large responses.
+
 ## Post-Inference Overrides
 
 After initial inference, the scorer applies a small set of override rules.

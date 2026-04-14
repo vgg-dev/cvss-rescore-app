@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import argparse
+import ipaddress
 import json
 import math
 import re
+import socket
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
@@ -25,6 +28,7 @@ PR_WEIGHTS = {
 }
 
 REQUIRED_METRICS = ["AV", "AC", "PR", "UI", "S", "C", "I", "A"]
+MAX_REFERENCE_BYTES = 1_000_000
 
 RULES: Dict[str, List[Tuple[str, str, float, str, str]]] = {
     "AV": [
@@ -211,15 +215,69 @@ def strip_html(raw: str) -> str:
     return raw.strip()
 
 
+def is_blocked_ip(address: str) -> bool:
+    ip = ipaddress.ip_address(address)
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_reserved
+        or ip.is_unspecified
+    )
+
+
+def validate_reference_url(url: str) -> Optional[str]:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme.lower() != "https":
+        return "Reference URL blocked: only https URLs are allowed"
+    if not parsed.hostname:
+        return "Reference URL blocked: missing hostname"
+
+    try:
+        addr_info = socket.getaddrinfo(parsed.hostname, parsed.port or 443, type=socket.SOCK_STREAM)
+    except socket.gaierror:
+        return "Reference URL blocked: hostname could not be resolved"
+
+    for family, _, _, _, sockaddr in addr_info:
+        if family not in (socket.AF_INET, socket.AF_INET6):
+            continue
+        if is_blocked_ip(sockaddr[0]):
+            return "Reference URL blocked: hostname resolves to a private or reserved address"
+
+    return None
+
+
+def read_limited_response(response, max_bytes: int) -> Tuple[Optional[bytes], Optional[str]]:
+    content_length = response.headers.get("Content-Length")
+    if content_length and int(content_length) > max_bytes:
+        return None, "Reference response blocked: response is too large"
+
+    data = response.read(max_bytes + 1)
+    if len(data) > max_bytes:
+        return None, "Reference response blocked: response is too large"
+    return data, None
+
+
 def fetch_url(url: str, timeout: int, headers: Optional[Dict[str, str]] = None) -> Tuple[Optional[bytes], Optional[str], Optional[str]]:
+    validation_error = validate_reference_url(url)
+    if validation_error:
+        return None, None, validation_error
+
     hdrs = {"User-Agent": "cvss-reference-inference/2.0"}
     if headers:
         hdrs.update(headers)
     req = urllib.request.Request(url, headers=hdrs)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read(), resp.headers.get("Content-Type", ""), None
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
+            final_validation_error = validate_reference_url(resp.geturl())
+            if final_validation_error:
+                return None, None, final_validation_error
+            data, size_error = read_limited_response(resp, MAX_REFERENCE_BYTES)
+            if size_error:
+                return None, None, size_error
+            return data, resp.headers.get("Content-Type", ""), None
+    except (ValueError, urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
         return None, None, str(exc)
 
 

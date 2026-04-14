@@ -132,7 +132,7 @@ The generated API docs include:
 - typed request and response schemas
 - endpoint summaries and descriptions
 - example request values
-- documented error responses for `400`, `404`, `502`, and `500`
+- documented error responses for `400`, `404`, `429`, `500`, `502`, `503`, and `504`
 
 For scoring internals, see [CVSS Metric Inference Rules](docs/metric-rules.md).
 
@@ -176,8 +176,11 @@ Current regression coverage focuses on:
 |---|---|---|
 | `400` | The CVE ID format is invalid | `NOT-A-CVE` |
 | `404` | The CVE JSON does not exist upstream | Reserved or mistyped CVE |
-| `502` | The app cannot fetch the upstream CVE JSON | Network or upstream availability issue |
+| `429` | Too many analyze requests from the same client | Repeated `/api/analyze` calls |
 | `500` | The bundled scorer failed or returned invalid JSON | Local execution/scoring failure |
+| `502` | The app cannot fetch the upstream CVE JSON | Network or upstream availability issue |
+| `503` | The scorer is busy and cannot queue the request | Concurrent scorer saturation |
+| `504` | The scorer exceeded its execution timeout | Slow references or scorer execution |
 
 ## Scoring Modes
 
