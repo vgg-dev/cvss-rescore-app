@@ -134,6 +134,8 @@ The generated API docs include:
 - example request values
 - documented error responses for `400`, `404`, `502`, and `500`
 
+For scoring internals, see [CVSS Metric Inference Rules](docs/metric-rules.md).
+
 ## Run Tests
 
 Install dependencies first if you have not already run the local setup steps.
@@ -217,6 +219,7 @@ Typical deploy flow:
 - App entry: [app.py](app.py)
 - Backend wrapper: [scorer_service.py](scorer_service.py)
 - Bundled scorer: [infer_cvss31_from_references.py](vendor/infer_cvss31_from_references.py)
+- Metric rules: [metric-rules.md](docs/metric-rules.md)
 - Frontend: [index.html](static/index.html)
 - Styles: [app.css](static/app.css)
 - Client logic: [app.js](static/app.js)
