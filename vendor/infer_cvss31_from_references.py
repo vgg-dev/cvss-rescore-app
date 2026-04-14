@@ -29,6 +29,7 @@ PR_WEIGHTS = {
 
 REQUIRED_METRICS = ["AV", "AC", "PR", "UI", "S", "C", "I", "A"]
 MAX_REFERENCE_BYTES = 1_000_000
+MAX_REFERENCE_REDIRECTS = 5
 
 RULES: Dict[str, List[Tuple[str, str, float, str, str]]] = {
     "AV": [
@@ -259,6 +260,18 @@ def read_limited_response(response, max_bytes: int) -> Tuple[Optional[bytes], Op
     return data, None
 
 
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+NO_REDIRECT_OPENER = urllib.request.build_opener(NoRedirectHandler)
+
+
+def resolve_redirect_url(current_url: str, location: str) -> str:
+    return urllib.parse.urljoin(current_url, location)
+
+
 def fetch_url(url: str, timeout: int, headers: Optional[Dict[str, str]] = None) -> Tuple[Optional[bytes], Optional[str], Optional[str]]:
     validation_error = validate_reference_url(url)
     if validation_error:
@@ -267,17 +280,32 @@ def fetch_url(url: str, timeout: int, headers: Optional[Dict[str, str]] = None) 
     hdrs = {"User-Agent": "cvss-reference-inference/2.0"}
     if headers:
         hdrs.update(headers)
-    req = urllib.request.Request(url, headers=hdrs)
+
+    current_url = url
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            final_validation_error = validate_reference_url(resp.geturl())
-            if final_validation_error:
-                return None, None, final_validation_error
-            data, size_error = read_limited_response(resp, MAX_REFERENCE_BYTES)
-            if size_error:
-                return None, None, size_error
-            return data, resp.headers.get("Content-Type", ""), None
-    except (ValueError, urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
+        for _ in range(MAX_REFERENCE_REDIRECTS + 1):
+            req = urllib.request.Request(current_url, headers=hdrs)
+            try:
+                with NO_REDIRECT_OPENER.open(req, timeout=timeout) as resp:
+                    data, size_error = read_limited_response(resp, MAX_REFERENCE_BYTES)
+                    if size_error:
+                        return None, None, size_error
+                    return data, resp.headers.get("Content-Type", ""), None
+            except urllib.error.HTTPError as exc:
+                if exc.code not in {301, 302, 303, 307, 308}:
+                    return None, None, str(exc)
+
+                location = exc.headers.get("Location")
+                if not location:
+                    return None, None, "Reference redirect blocked: missing Location header"
+
+                current_url = resolve_redirect_url(current_url, location)
+                redirect_validation_error = validate_reference_url(current_url)
+                if redirect_validation_error:
+                    return None, None, redirect_validation_error
+
+        return None, None, "Reference redirect blocked: too many redirects"
+    except (ValueError, urllib.error.URLError, TimeoutError) as exc:
         return None, None, str(exc)
 
 

@@ -1,6 +1,12 @@
+import inspect
+
 from fastapi.testclient import TestClient
 
 import app as app_module
+
+
+def test_analyze_route_is_sync_to_avoid_blocking_event_loop() -> None:
+    assert not inspect.iscoroutinefunction(app_module.analyze)
 
 
 def test_index_serves_html() -> None:

@@ -125,5 +125,5 @@ async def index() -> FileResponse:
         },
     },
 )
-async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     return analyze_cve(request)
